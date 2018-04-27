@@ -1,7 +1,7 @@
 import os
 import data_util
-from model import *
 import numpy as np
+import tensorflow as tf
 import time
 import resnet
 
@@ -84,6 +84,43 @@ def run_training():
         finally:
             coord.request_stop()
         coord.join(threads)
+
+
+def losses(logits, labels):
+
+    with tf.variable_scope('loss') as scope:
+        cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
+            logits=logits, labels=labels, name='xentropy_per_example')  #求交叉熵
+        loss = tf.reduce_mean(cross_entropy, name='loss')  #求平均值
+        tf.summary.scalar(scope.name + '/loss', loss)
+
+    return loss
+
+
+def trainning(loss, learning_rate):
+
+    with tf.name_scope('optimizer'):
+        optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
+        global_step = tf.Variable(0, name='global_step', trainable=False)
+        train_op = optimizer.minimize(loss, global_step=global_step)
+
+    return train_op
+
+
+def evaluation(logits, labels):
+
+    with tf.variable_scope('accuracy') as scope:
+        # tf.nn.in_top_k() 主要是用于计算预测的结果和实际结果的是否相等，返回一个bool类型的张量
+        # tf.nn.in_top_k(prediction, target,K): prediction就是表示你预测的结果，
+        # 大小就是预测样本的数量乘以输出的维度，类型是tf.float32等。
+        # target就是实际样本类别的标签，大小就是样本数量的个数。
+        # K表示每个样本的预测结果的前K个最大的数里面是否含有target中的值。一般都是取1。
+        correct = tf.nn.in_top_k(logits, labels, 1)
+        correct = tf.cast(correct, tf.float16)
+        accuracy = tf.reduce_mean(correct)
+        tf.summary.scalar(scope.name + '/accuracy', accuracy)
+
+    return accuracy
 
 
 
