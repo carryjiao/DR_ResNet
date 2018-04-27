@@ -36,6 +36,7 @@ def create_variables(name, shape, initializer=tf.contrib.layers.xavier_initializ
 
     new_variables = tf.get_variable(name, shape=shape, initializer=initializer,
                                     regularizer=regularizer)
+    tf.add_to_collection(tf.GraphKeys.WEIGHTS, new_variables)
     return new_variables
 
 

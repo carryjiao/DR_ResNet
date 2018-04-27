@@ -117,8 +117,8 @@ def evaluation(logits, labels):
         # 大小就是预测样本的数量乘以输出的维度，类型是tf.float32等。
         # target就是实际样本类别的标签，大小就是样本数量的个数。
         # K表示每个样本的预测结果的前K个最大的数里面是否含有target中的值。一般都是取1。
-        #correct = tf.nn.in_top_k(logits, labels, 1)
-        correct = tf.equal(tf.arg_max(logits, 1), tf.arg_max(labels, 1))
+        correct = tf.nn.in_top_k(logits, labels, 1)
+        #correct = tf.equal(tf.arg_max(logits, 1), tf.arg_max(labels, 1))
         correct = tf.cast(correct, tf.float32)
         accuracy = tf.reduce_mean(correct)
         tf.summary.scalar(scope.name + '/accuracy', accuracy)
