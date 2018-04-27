@@ -1,9 +1,9 @@
 import os
 import data_util
 import numpy as np
-import tensorflow as tf
 import time
 import resnet
+from hyper_parameters import *
 
 
 N_CLASSES = 5
@@ -91,7 +91,9 @@ def losses(logits, labels):
     with tf.variable_scope('loss') as scope:
         cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
             logits=logits, labels=labels, name='xentropy_per_example')  #求交叉熵
-        loss = tf.reduce_mean(cross_entropy, name='loss')  #求平均值
+        regularizer = tf.contrib.layers.l2_regularizer(scale=FLAGS.weight_decay)
+        reg_term = tf.contrib.layers.apply_regularization(regularizer)
+        loss = tf.reduce_mean(cross_entropy, name='loss') + reg_term #求平均值
         tf.summary.scalar(scope.name + '/loss', loss)
 
     return loss
@@ -115,8 +117,9 @@ def evaluation(logits, labels):
         # 大小就是预测样本的数量乘以输出的维度，类型是tf.float32等。
         # target就是实际样本类别的标签，大小就是样本数量的个数。
         # K表示每个样本的预测结果的前K个最大的数里面是否含有target中的值。一般都是取1。
-        correct = tf.nn.in_top_k(logits, labels, 1)
-        correct = tf.cast(correct, tf.float16)
+        #correct = tf.nn.in_top_k(logits, labels, 1)
+        correct = tf.equal(tf.arg_max(logits, 1), tf.arg_max(labels, 1))
+        correct = tf.cast(correct, tf.float32)
         accuracy = tf.reduce_mean(correct)
         tf.summary.scalar(scope.name + '/accuracy', accuracy)
 
